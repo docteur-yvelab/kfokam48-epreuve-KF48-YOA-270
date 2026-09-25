@@ -13,4 +13,5 @@ public interface PresenceRepository extends JpaRepository<Presence, Long> {
     List<Presence> findBySessionId(Long sessionId);
     long countBySessionId(Long sessionId);
     boolean existsBySessionIdAndEtudiantId(Long sessionId, Long etudiantId);
+    List<Presence> findAllByEtudiantIdIn(List<Long> etudiantIds);
 }
