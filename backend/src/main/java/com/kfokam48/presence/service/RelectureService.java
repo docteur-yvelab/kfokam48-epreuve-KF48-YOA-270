@@ -33,12 +33,16 @@ public class RelectureService {
     private final EtudiantRepository etudiantRepository;
     private final PresenceRepository presenceRepository;
 
-    public void assignerRelecteurSiPossible(Long exerciceId) {
+    /**
+     * Assigne DEUX relecteurs distincts parmi les présents à la session (sauf l'auteur).
+     * Appelé automatiquement après dépôt d'exercice.
+     */
+    public void assignerDeuxRelecteurs(Long exerciceId) {
         Exercice exercice = exerciceRepository.findById(exerciceId)
                 .orElseThrow(() -> new IllegalArgumentException("Exercice introuvable"));
 
         if (exercice.getStatut() != Exercice.StatutExercice.DEPOSE) {
-            return;
+            return; // Déjà assigné
         }
 
         if (exercice.getSession().isCloturee()) {
@@ -50,55 +54,82 @@ public class RelectureService {
                 .stream()
                 .map(p -> p.getEtudiant().getId())
                 .filter(id -> !id.equals(exercice.getEtudiant().getId()))
+                .distinct()
                 .toList();
 
-        if (etudiantsPresents.isEmpty()) {
-            // Trou : aucun autre étudiant présent - l'exercice reste en DEPOSE
-            // Le formateur le verra comme "en attente" (relecturesEnAttente = 0 car pas de relecteur assignable)
+        if (etudiantsPresents.size() < 2) {
+            // Trou : pas assez de pairs pour 2 relecteurs distincts
+            // L'exercice reste en DEPOSE, le formateur le verra comme "en attente" (0 relecteur assignable)
             return;
         }
 
-        // Assignation aléatoire (Q7, RG5)
-        Long relecteurId = etudiantsPresents.get(new Random().nextInt(etudiantsPresents.size()));
+        // Assignation aléatoire de 2 relecteurs DISTINCTS (Q7, RG5, RG4)
+        Random random = new Random();
+        List<Long> selectionnes = random.ints(0, etudiantsPresents.size())
+                .distinct()
+                .limit(2)
+                .mapToObj(etudiantsPresents::get)
+                .toList();
 
+        Long relecteur1Id = selectionnes.get(0);
+        Long relecteur2Id = selectionnes.get(1);
+
+        // Mettre à jour le statut de l'exercice
         Exercice exerciceMaj = exercice.toBuilder()
                 .statut(Exercice.StatutExercice.EN_ATTENTE_RELECTURE)
                 .build();
         exerciceRepository.save(exerciceMaj);
 
-        Relecture relecture = Relecture.builder()
+        // Créer relecture 1
+        Relecture relecture1 = Relecture.builder()
                 .exercice(exerciceMaj)
-                .relecteur(etudiantRepository.getReferenceById(relecteurId))
-                .note(0) // Sera mis à jour lors de la soumission
+                .relecteur(etudiantRepository.getReferenceById(relecteur1Id))
+                .note(0)
                 .commentaire("")
                 .dateSoumission(LocalDateTime.now())
+                .ordreRelecteur((short) 1)
+                .noteProvisoire(true)
                 .build();
 
-        relectureRepository.save(relecture);
+        // Créer relecture 2
+        Relecture relecture2 = Relecture.builder()
+                .exercice(exerciceMaj)
+                .relecteur(etudiantRepository.getReferenceById(relecteur2Id))
+                .note(0)
+                .commentaire("")
+                .dateSoumission(LocalDateTime.now())
+                .ordreRelecteur((short) 2)
+                .noteProvisoire(true)
+                .build();
+
+        relectureRepository.saveAll(List.of(relecture1, relecture2));
     }
 
-    public RelectureResponse soumettreRelecture(Long relectureId, RelectureRequest request, Long relecteurId) {
-        Relecture relecture = relectureRepository.findById(relectureId)
-                .orElseThrow(() -> new IllegalArgumentException("Relecture introuvable"));
+    /**
+     * Soumet une relecture (ordre 1 ou 2) pour un exercice.
+     */
+    public RelectureResponse soumettreRelecture(Long exerciceId, Short ordreRelecteur, RelectureRequest request, Long relecteurId) {
+        Exercice exercice = exerciceRepository.findById(exerciceId)
+                .orElseThrow(() -> new IllegalArgumentException("Exercice introuvable"));
 
-        if (!relecture.getRelecteur().getId().equals(relecteurId)) {
-            throw new IllegalArgumentException("Non autorisé");
-        }
-
-        if (relecture.getExercice().getSession().isCloturee()) {
+        if (exercice.getSession().isCloturee()) {
             throw new SessionClotureeException();
         }
 
-        if (relecture.getDateModification() != null && relecture.getExercice().getSession().isCloturee()) {
-            throw new RelectureNonModifiableException();
-        }
+        Relecture relecture = relectureRepository.findByExerciceIdAndOrdreRelecteur(exerciceId, ordreRelecteur)
+                .orElseThrow(() -> new IllegalArgumentException("Relecture introuvable pour cet ordre"));
 
-        validerNote(request.getNote());
+        // Vérifier que c'est le bon relecteur
+        if (!relecture.getRelecteur().getId().equals(relecteurId)) {
+            throw new IllegalArgumentException("Non autorisé : ce n'est pas votre relecture");
+        }
 
         // Vérifier auto-relecture
         if (relecture.getExercice().getEtudiant().getId().equals(relecteurId)) {
             throw new AutoRelectureException();
         }
+
+        validerNote(request.getNote());
 
         boolean premiereSoumission = relecture.getNote() == 0 && relecture.getCommentaire().isEmpty();
 
@@ -110,24 +141,60 @@ public class RelectureService {
             relecture.setDateModification(LocalDateTime.now());
         }
 
-        // Mettre à jour le statut de l'exercice
-        Exercice exercice = relecture.getExercice();
-        exercice.setStatut(Exercice.StatutExercice.RELU);
-        exerciceRepository.save(exercice);
+        // Recalculer la moyenne et mettre à jour les flags noteProvisoire
+        recalculerMoyenneEtFlags(exerciceId);
 
         relecture = relectureRepository.save(relecture);
         return toResponse(relecture);
     }
 
-    public RelectureResponse getRelectureByExercice(Long exerciceId) {
-        return relectureRepository.findByExerciceId(exerciceId)
+    /**
+     * Recalcule la moyenne des 2 notes et met à jour noteProvisoire sur les deux relectures.
+     */
+    private void recalculerMoyenneEtFlags(Long exerciceId) {
+        List<Relecture> relectures = relectureRepository.findByExerciceIdOrderByOrdreRelecteurAsc(exerciceId);
+        
+        long countRendues = relectures.stream()
+                .filter(r -> r.getNote() != 0 || !r.getCommentaire().isEmpty())
+                .count();
+
+        boolean uneSeuleRendue = countRendues == 1;
+        boolean lesDeuxRendues = countRendues == 2;
+
+        for (Relecture r : relectures) {
+            r.setNoteProvisoire(uneSeuleRendue);
+        }
+
+        // Mettre à jour le statut de l'exercice
+        Exercice exercice = exerciceRepository.findById(exerciceId).orElseThrow();
+        if (lesDeuxRendues) {
+            exercice.setStatut(Exercice.StatutExercice.RELU);
+        } else if (uneSeuleRendue) {
+            exercice.setStatut(Exercice.StatutExercice.EN_ATTENTE_RELECTURE);
+        }
+        exerciceRepository.save(exercice);
+        
+        relectureRepository.saveAll(relectures);
+    }
+
+    public List<RelectureResponse> getRelecturesByExercice(Long exerciceId) {
+        return relectureRepository.findByExerciceIdOrderByOrdreRelecteurAsc(exerciceId)
+                .stream()
                 .map(this::toResponse)
-                .orElseThrow(() -> new IllegalArgumentException("Aucune relecture pour cet exercice"));
+                .toList();
     }
 
     public List<RelectureResponse> getRelecturesByRelecteur(Long relecteurId) {
         return relectureRepository.findByRelecteurId(relecteurId)
                 .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    public List<RelectureResponse> getRelecturesEnAttentePourRelecteur(Long relecteurId) {
+        return relectureRepository.findByRelecteurId(relecteurId)
+                .stream()
+                .filter(r -> (r.getNote() == 0 && r.getCommentaire().isEmpty()) && !r.getExercice().getSession().isCloturee())
                 .map(this::toResponse)
                 .toList();
     }
@@ -142,6 +209,7 @@ public class RelectureService {
         return RelectureResponse.builder()
                 .id(relecture.getId())
                 .exerciceId(relecture.getExercice().getId())
+                .ordreRelecteur(relecture.getOrdreRelecteur())
                 .relecteurId(relecture.getRelecteur().getId())
                 .note(relecture.getNote())
                 .commentaire(relecture.getCommentaire())

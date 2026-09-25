@@ -19,8 +19,8 @@ public class Relecture {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "exercice_id", nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exercice_id", nullable = false)
     private Exercice exercice;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -40,4 +40,10 @@ public class Relecture {
 
     @Column(name = "date_modification")
     private LocalDateTime dateModification;
+
+    @Column(name = "ordre_relecteur", nullable = false)
+    private Short ordreRelecteur = 1;
+
+    @Column(name = "note_provisoire", nullable = false)
+    private Boolean noteProvisoire = false;
 }

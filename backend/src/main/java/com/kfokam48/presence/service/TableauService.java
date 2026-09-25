@@ -34,12 +34,6 @@ public class TableauService {
                 .orElseThrow(PromotionInconnueException::new);
 
         List<Etudiant> etudiants = etudiantRepository.findByPromotionId(promotionId);
-
-        // Récupérer toutes les sessions de cette promotion
-        var sessions = promotionRepository.findById(promotionId).get().getSessions(); // Nécessite relation
-
-        // Pour simplifier : on agrège sur toutes les sessions de la promotion
-        // On récupère toutes les présences, exercices, relectures pour ces étudiants
         List<Long> etudiantIds = etudiants.stream().map(Etudiant::getId).toList();
 
         // Présences par étudiant
@@ -50,18 +44,61 @@ public class TableauService {
         Map<Long, Long> exercicesParEtudiant = exerciceRepository.findAllByEtudiantIdIn(etudiantIds).stream()
                 .collect(Collectors.groupingBy(e -> e.getEtudiant().getId(), Collectors.counting()));
 
-        // Relectures en attente par relecteur
+        // Relectures en attente par relecteur (relectures non rendues)
         Map<Long, Long> relecturesEnAttenteParRelecteur = relectureRepository.findAllByRelecteurIdIn(etudiantIds).stream()
-                .filter(r -> r.getExercice().getStatut() == Exercice.StatutExercice.EN_ATTENTE_RELECTURE)
+                .filter(r -> (r.getNote() == 0 && r.getCommentaire().isEmpty()) && !r.getExercice().getSession().isCloturee())
                 .collect(Collectors.groupingBy(r -> r.getRelecteur().getId(), Collectors.counting()));
 
-        // Moyenne des notes reçues par étudiant (en tant qu'auteur d'exercice)
-        Map<Long, Double> moyenneParEtudiant = relectureRepository.findAllByExercice_EtudiantIdIn(etudiantIds).stream()
-                .filter(r -> r.getExercice().getStatut() == Exercice.StatutExercice.RELU)
+        // Pour chaque étudiant (auteur d'exercices), calculer la moyenne de ses exercices
+        // et déterminer si la moyenne est provisoire (une seule relecture sur au moins un exercice)
+        List<Exercice> tousExercices = exerciceRepository.findAllByEtudiantIdIn(etudiantIds);
+        
+        Map<Long, Double> moyenneParEtudiant = tousExercices.stream()
                 .collect(Collectors.groupingBy(
-                        r -> r.getExercice().getEtudiant().getId(),
-                        Collectors.averagingInt(Relecture::getNote)
+                        e -> e.getEtudiant().getId(),
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                exercices -> {
+                                    // Pour chaque exercice, calculer la moyenne de ses 2 relectures
+                                    List<Double> moyennesExercices = exercices.stream()
+                                            .map(ex -> {
+                                                List<Relecture> relectures = relectureRepository.findByExerciceIdOrderByOrdreRelecteurAsc(ex.getId());
+                                                List<Integer> notes = relectures.stream()
+                                                        .filter(r -> r.getNote() != 0 || !r.getCommentaire().isEmpty())
+                                                        .map(Relecture::getNote)
+                                                        .toList();
+                                                if (notes.isEmpty()) return null;
+                                                return notes.stream().mapToInt(Integer::intValue).average().orElse(null);
+                                            })
+                                            .filter(m -> m != null)
+                                            .toList();
+                                    if (moyennesExercices.isEmpty()) return null;
+                                    return moyennesExercices.stream().mapToDouble(Double::doubleValue).average().orElse(null);
+                                }
+                        )
                 ));
+
+        // Déterminer si la moyenne est provisoire pour chaque étudiant
+        // Une moyenne est provisoire si au moins un exercice a une seule relecture rendue
+        Map<Long, Boolean> moyenneProvisoireParEtudiant = tousExercices.stream()
+                .collect(Collectors.groupingBy(
+                        e -> e.getEtudiant().getId(),
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                exercices -> exercices.stream().anyMatch(ex -> {
+                                    List<Relecture> relectures = relectureRepository.findByExerciceIdOrderByOrdreRelecteurAsc(ex.getId());
+                                    long countRendues = relectures.stream()
+                                            .filter(r -> r.getNote() != 0 || !r.getCommentaire().isEmpty())
+                                            .count();
+                                    return countRendues == 1;
+                                })
+                        )
+                ));
+
+        // Relectures en attente par relecteur (pour affichage dans tableau)
+        Map<Long, Long> relecturesEnAttenteParRelecteur = relectureRepository.findAllByRelecteurIdIn(etudiantIds).stream()
+                .filter(r -> (r.getNote() == 0 && r.getCommentaire().isEmpty()) && !r.getExercice().getSession().isCloturee())
+                .collect(Collectors.groupingBy(r -> r.getRelecteur().getId(), Collectors.counting()));
 
         return etudiants.stream()
                 .map(e -> TableauEtudiantResponse.builder()
@@ -70,6 +107,7 @@ public class TableauService {
                         .presences(presencesParEtudiant.getOrDefault(e.getId(), 0L).intValue())
                         .exercicesDeposes(exercicesParEtudiant.getOrDefault(e.getId(), 0L).intValue())
                         .moyenne(moyenneParEtudiant.get(e.getId()))
+                        .moyenneProvisoire(moyenneProvisoireParEtudiant.getOrDefault(e.getId(), false))
                         .relecturesEnAttente(relecturesEnAttenteParRelecteur.getOrDefault(e.getId(), 0L).intValue())
                         .build())
                 .toList();

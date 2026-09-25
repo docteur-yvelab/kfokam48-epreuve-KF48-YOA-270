@@ -2,8 +2,6 @@ package com.kfokam48.presence.dto;
 
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,5 +12,6 @@ public class TableauEtudiantResponse {
     private Integer presences;
     private Integer exercicesDeposes;
     private Double moyenne;
+    private Boolean moyenneProvisoire;
     private Integer relecturesEnAttente;
 }

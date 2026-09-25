@@ -11,9 +11,11 @@ import java.time.LocalDateTime;
 public class RelectureResponse {
     private Long id;
     private Long exerciceId;
+    private Short ordreRelecteur;
     private Long relecteurId;
     private Integer note;
     private String commentaire;
     private LocalDateTime dateSoumission;
     private LocalDateTime dateModification;
+    private Boolean noteProvisoire;
 }
