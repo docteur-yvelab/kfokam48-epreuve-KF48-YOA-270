@@ -77,11 +77,11 @@ L'application **PresenceKFOKAM** répond au besoin de la direction de formation 
 | **EF3** | Le formateur ajoute une présence manuelle | Quand le formateur appelle l'endpoint manuel avec sessionId + etudiantId, l'API renvoie 201 avec `source: "FORMATEUR"` et la présence apparaît au tableau | Must |
 | **EF4** | L'étudiant dépose le lien de son exercice pour une session | Quand je fournis sessionId, etudiantId, lien (URI valide), l'API renvoie 201 `{id, statut: "DEPOSE"}` et l'exercice apparaît dans mes dépôts | Must |
 | **EF5** | L'étudiant remplace son lien d'exercice tant qu'aucune relecture n'a commencé | Quand je redépose un lien pour le même (sessionId, etudiantId) et que le statut est `DEPOSE`, l'API met à jour le lien et renvoie 200 | Should |
-| **EF6** | Le système assigne un relecteur aléatoire parmi les présents à la session | Quand un exercice passe en `EN_ATTENTE_RELECTURE`, un étudiant présent (présence enregistrée) et différent de l'auteur est assigné ; la relecture apparaît dans ses tâches | Must |
-| **EF7** | Le relecteur soumet une note (0–20 entier) et un commentaire | Quand je fournis note ∈ [0,20] ∩ ℤ et commentaire non vide, l'API renvoie 200 et le statut exercice passe `RELU` | Must |
-| **EF8** | Le relecteur modifie sa note/commentaire tant que la session n'est pas clôturée | Quand je soumets à nouveau sur le même id relecture et session ouverte, l'API renvoie 200 avec les nouvelles valeurs | Must |
-| **EF9** | L'étudiant relu consulte sa note et le commentaire (anonyme) | Quand je consulte mon exercice relu, l'API renvoie note + commentaire sans identifiant du relecteur | Must |
-| **EF10** | Le formateur voit le tableau récapitulatif de sa promotion | Quand j'appelle `GET /api/tableau?promotionId=X`, l'API renvoie 200 avec un tableau par étudiant : `etudiantId, nom, presences, exercicesDeposes, moyenne (null si aucune), relecturesEnAttente` | Must |
+| **EF6** | Le système assigne **deux** relecteurs aléatoires parmi les présents à la session | Quand un exercice passe en `EN_ATTENTE_RELECTURE`, deux étudiants présents (≠ auteur, ≠ entre eux) sont assignés ; les deux relectures apparaissent dans leurs tâches | Must |
+| **EF7** | Chaque relecteur soumet sa note (0–20 entier) et son commentaire | Quand je fournis note ∈ [0,20] ∩ ℤ et commentaire, l'API renvoie 200 et la relecture correspondante (ordre 1 ou 2) est enregistrée | Must |
+| **EF8** | Chaque relecteur modifie sa note tant que la session n'est pas clôturée | Quand je soumets à nouveau sur le même (exerciceId, ordreRelecteur) et session ouverte, l'API renvoie 200 avec les nouvelles valeurs | Must |
+| **EF9** | L'étudiant relu consulte ses deux notes, commentaires et la moyenne | Quand je consulte mon exercice relu, l'API renvoie les deux relectures (ordre 1 et 2) avec notes + commentaires + moyenne (provisoire si une seule) | Must |
+| **EF10** | Le formateur voit le tableau avec moyenne des deux notes + flag provisoire | GET /api/tableau renvoie `moyenne` (moyenne des 2 notes) + `moyenneProvisoire` (true si une seule relecture rendue) | Must |
 | **EF11** | Blocage temporaire après 5 codes erronés (anti-bruteforce) | Quand un étudiant fait 5 tentatives avec code inconnu sur la même session, il reçoit 429 pendant 2 min avant de pouvoir retenter | Should |
 | **EF12** | Clôture de session par le formateur | Quand le formateur clôture, plus aucune présence, dépôt, relecture ni modification n'est possible ; assignations figées | Must |
 
@@ -110,8 +110,10 @@ L'application **PresenceKFOKAM** répond au besoin de la direction de formation 
 | **RG1** | Un code de présence expire 15 minutes après l'ouverture de la session (`expirationAt = ouvertureAt + 15 min`) | Q2 |
 | **RG2** | Un étudiant ne peut pas relire son propre exercice | Q5 |
 | **RG3** | Une note est un entier compris entre 0 et 20 inclus | Q9 |
-| **RG4** | Un seul relecteur par exercice | Q6 |
-| **RG5** | Le relecteur est choisi aléatoirement parmi les étudiants **présents à cette session** | Q7 |
+| **RG4** | Deux relecteurs distincts par exercice | Q6 (changée), enveloppe |
+| **RG5** | Deux relecteurs choisis aléatoirement parmi les présents (différents de l'auteur et entre eux) | Q7, enveloppe |
+| **RG19** | La note finale est la moyenne des deux notes (arrondie à l'entier). Si une seule relecture rendue → note provisoire = cette note | Enveloppe |
+| **RG20** | Un exercice ne passe en statut RELU que quand les deux relectures sont rendues | Enveloppe |
 | **RG6** | Un étudiant ne peut marquer sa présence qu'une seule fois par session (unicité session+étudiant) | Q3, contrat 409 DEJA_PRESENT |
 | **RG7** | Un étudiant ne peut déposer qu'un seul exercice par session (unicité session+étudiant) | Contrat 409 EXERCICE_DEJA_DEPOSE |
 | **RG8** | Le lien d'exercice doit être une URI valide | Contrat 400 LIEN_INVALIDE |
@@ -148,6 +150,14 @@ L'application **PresenceKFOKAM** répond au besoin de la direction de formation 
 | **Q10** : « Un relecteur peut corriger sa note après l'avoir envoyée, tant que le formateur n'a pas clôturé la session »<br>**vs**<br>**Q15** : « La note est définitive une fois envoyée. Une fois que le relecteur a validé, c'est fini, il ne peut plus y revenir. » | **Q10 l'emporte sur Q15** | - Q11 décrit un usage concret : « L'exercice reste en attente et je dois le voir clairement dans mon tableau » → implique que le formateur peut attendre avant de clôturer, et pendant ce temps le relecteur peut encore agir.<br>- Q15 est une intention générale (« c'est plus honnête »), pas une règle opérationnelle.<br>- Le contrat API impose `POST /api/relectures/{id}` avec 409 RELECTURE_DEJA_RENDUE **mais** ne prévoit pas de verrouillage définitif avant clôture.<br>- **RG13** = note modifiable tant que session ouverte. **RG14** = clôture verrouille tout. |
 
 > Cette décision impacte : modèle `Relecture` (pas de champ `valideeDefinitivement`), endpoint `POST /api/relectures/{id}` (autorise PUT/PATCH ou POST répété tant que session ouverte), frontend (bouton « Modifier » visible jusqu'à clôture).
+
+### 7.3 Changement de besoin — Enveloppe (Étape 3)
+
+| Point | Décision initiale | Nouveau besoin (enveloppe) | Décision retenue | Pourquoi |
+|-------|-------------------|----------------------------|------------------|----------|
+| Nb relecteurs par exercice | 1 (Q6) | 2 (enveloppe) | **2 relecteurs distincts** | Besoin explicite client : "un seul relecteur ça ne marche pas" |
+| Note finale | Note unique du relecteur | Moyenne des 2 notes | **Moyenne arrondie à l'entier** | Juste, évite biais d'un seul relecteur |
+| Cas 1 seule relecture rendue | Note définitive (Q15) | Note provisoire | **Note provisoire = note unique, flag moyenneProvisoire=true** | Cohérent avec Q10 (modifiable jusqu'à clôture) + transparence formateur |
 
 ---
 
@@ -198,8 +208,8 @@ L'application **PresenceKFOKAM** répond au besoin de la direction de formation 
    - `CAHIER_DES_CHARGES.md` (ce document, maintenu à jour post-étape 3)
    - `JOURNAL.md` (6 entrées, une par étape, rédigées au fil de l'eau)
    - `diagrammes/` : `D1_cas_utilisation.md`, `D2_modele_donnees.md`, `D3_sequence_presence.md`, `D4_etats_exercice.md` (bonus)
-3. **Contrat API** (`/api/contrat.yaml`) : 5 opérations imposées + extensions (manuel, clôture, assignation, etc.), figé avant premier commit code
-4. **Backend** (`/backend`) : Spring Boot 3, Java 17, Maven, `mvnw`, Flyway, tests, données démo
+3. **Contrat API** (`/api/contrat.yaml`) : 5 opérations imposées + extensions (manuel, clôture, assignation, deux relecteurs), figé avant premier commit code
+4. **Backend** (`/backend`) : Spring Boot 3, Java 17, Maven, `mvnw`, Flyway (V1, V2, **V3**), tests, données démo
 5. **Frontend** (`/frontend`) : React 18 + Vite, 3 écrans, build passant (`npm run build`)
 6. **README.md** : installation testée depuis clone vierge, commandes exactes, justification frontend
 7. **CHANGELOG.md** : cohérent avec l'historique Git (étape 4)
@@ -248,5 +258,6 @@ L'application **PresenceKFOKAM** répond au besoin de la direction de formation 
 | Version | Quand | Ce qui a changé et pourquoi |
 |---------|-------|----------------------------|
 | 1 | 25/09/2026 | Version initiale — analyse complète basée sur SUJET.md, CLIENT.md, contrat.yaml. Décision Q10 > Q15 documentée. Trou « seul présent » identifié. |
+| 2 | 25/09/2026 | **Enveloppe ouverte (Étape 3)** — Bug race condition présence corrigé (test PresenceConcurrencyIT). Changement besoin : 2 relecteurs par exercice (Q6 contredit). Migration Flyway V3__deux_relecteurs.sql. RG4/RG5 modifiés, RG19/RG20 ajoutés. EF6-EF10 adaptés. Section 7.3 documentée. Diagrammes D2/D4 mis à jour. API contrat.yaml étendu (POST /api/relectures/{exerciceId}, GET /api/exercices/{id}/relectures, moyenneProvisoire). |
 
 > **Rappel :** L'étape 3 rendra une partie de ce document faux. Revenir le corriger **immédiatement** après ouverture de l'enveloppe et noter ici — un cahier des charges périmé est un cahier des charges mort.

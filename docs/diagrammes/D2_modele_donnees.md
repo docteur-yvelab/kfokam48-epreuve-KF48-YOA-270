@@ -52,7 +52,7 @@ classDiagram
         +StatutExercice statut
         +LocalDateTime dateDepot
         +LocalDateTime dateModifLien
-        +Relecture relecture
+        +List~Relecture~ relectures
         +unique(session, etudiant)
     }
     
@@ -64,7 +64,9 @@ classDiagram
         +String commentaire
         +LocalDateTime dateSoumission
         +LocalDateTime dateModification
-        +unique(exercice)
+        +Short ordreRelecteur
+        +Boolean noteProvisoire
+        +unique(exercice, ordreRelecteur)
     }
     
     class SourcePresence {
@@ -100,8 +102,8 @@ classDiagram
     Exercice "*" --> "1" Etudiant : etudiant (auteur)
     Etudiant "1" --> "0..*" Exercice : exercices
     
+    Exercice "1" --> "0..2" Relecture : relectures (ordre 1, 2)
     Relecture "1" --> "1" Exercice : exercice
-    Exercice "1" --> "0..1" Relecture : relecture
     
     Relecture "*" --> "1" Etudiant : relecteur
     Etudiant "1" --> "0..*" Relecture : relecturesFaites
@@ -109,18 +111,21 @@ classDiagram
     Exercice --> StatutExercice : statut
 ```
 
-**Correspondance migrations Flyway (à venir) :**
+**Correspondance migrations Flyway :**
 - `V1__create_schema.sql` : tables `promotion`, `etudiant`, `session`, `presence`, `exercice`, `relecture`
 - `V2__add_indexes_constraints.sql` : indexes sur code, unicités, FK
-- `V3__insert_demo_data.sql` : 1 promotion, 5 étudiants, 1 session ouverte
+- `V3__deux_relecteurs.sql` : recréation table `relecture` (ordreRelecteur 1/2, noteProvisoire, unique exercice+ordre)
+- `V4__insert_demo_data.sql` : 1 promotion, 5 étudiants, 1 session ouverte
 
 **Règles de gestion mappées :**
 - RG1 : `Session.expirationAt = ouvertureAt + 15 min`
 - RG2 : `Relecture.relecteur != Exercice.etudiant` (contrainte applicative)
 - RG3 : `Relecture.note` CHECK (0-20)
-- RG4 : `Relecture` unique sur `exercice_id`
-- RG5 : Assignation via requête `Etudiant` présent à la `Session`
+- RG4 : Deux relecteurs distincts par exercice (`ordreRelecteur` 1 et 2)
+- RG5 : Assignation via requête `Etudiant` présent à la `Session` (2 distincts)
 - RG6 : `Presence` unique sur `(session_id, etudiant_id)`
 - RG7 : `Exercice` unique sur `(session_id, etudiant_id)`
 - RG11 : `Presence.source` = FORMATEUR pour présence manuelle
 - RG16 : `Exercice.statut = EN_ATTENTE_RELECTURE` si pas de relecture
+- RG19 : Note finale = moyenne des 2 notes (arrondie), noteProvisoire si une seule
+- RG20 : Statut RELU seulement quand les 2 relectures rendues
