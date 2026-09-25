@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class Exercice {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
