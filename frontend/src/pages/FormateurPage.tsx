@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore, useUIStore } from '../store';
-import { useOuvrirSession, useCloturerSession, useTableau, useEtudiants, usePresenceManuelle } from '../hooks/useApi';
+import { useOuvrirSession, useCloturerSession, useTableau, useEtudiants, usePresenceManuelle, useSessions } from '../hooks/useApi';
 import type { SessionRequest, TableauEtudiantResponse, Etudiant } from '../types';
 import './FormateurPage.css';
 
