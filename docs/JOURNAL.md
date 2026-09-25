@@ -1,4 +1,4 @@
-# Journal de bord — <matricule>
+# Journal de bord - 270
 
 > Une entrée **par étape**, écrite **au moment où tu la termines**, pas à la fin de la journée.
 > Trois lignes suffisent. Un journal rédigé d'un bloc juste avant de soumettre se repère
