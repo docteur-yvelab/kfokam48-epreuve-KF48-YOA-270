@@ -14,4 +14,9 @@ public interface RelectureRepository extends JpaRepository<Relecture, Long> {
     boolean existsByExerciceId(Long exerciceId);
     List<Relecture> findAllByRelecteurIdIn(List<Long> relecteurIds);
     List<Relecture> findAllByExercice_EtudiantIdIn(List<Long> etudiantIds);
+    
+    // Nouveaux pour deux relecteurs
+    List<Relecture> findByExerciceIdOrderByOrdreRelecteurAsc(Long exerciceId);
+    Optional<Relecture> findByExerciceIdAndOrdreRelecteur(Long exerciceId, Short ordreRelecteur);
+    long countByExerciceId(Long exerciceId);
 }

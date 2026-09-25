@@ -18,4 +18,9 @@ public class RelectureRequest {
 
     @NotBlank
     private String commentaire;
+
+    @NotNull
+    @Min(1)
+    @Max(2)
+    private Short ordreRelecteur;
 }

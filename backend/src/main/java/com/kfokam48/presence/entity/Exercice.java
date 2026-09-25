@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "exercice", uniqueConstraints = @UniqueConstraint(columnNames = {"session_id", "etudiant_id"}))
@@ -37,6 +39,11 @@ public class Exercice {
 
     @Column(name = "date_modif_lien")
     private LocalDateTime dateModifLien;
+
+    @OneToMany(mappedBy = "exercice", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("ordreRelecteur ASC")
+    @Builder.Default
+    private List<Relecture> relectures = new ArrayList<>();
 
     public enum StatutExercice {
         DEPOSE, EN_ATTENTE_RELECTURE, RELU
