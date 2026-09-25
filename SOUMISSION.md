@@ -20,7 +20,7 @@
 | | |
 |---|---|
 | Dépôt (public) | `https://github.com/docteur-yvelab/kfokam48-epreuve-KF48-YOA-270` |
-| Commit final — hash complet, 40 caractères | *(à remplir après dernier commit)* |
+| Commit final — hash complet, 40 caractères | `a6785d0fe48212df3f275ddd6a0e83c77957d93e` |
 | Branche | `main` |
 
 ## Épreuve Git — étape 5
@@ -34,16 +34,16 @@
 
 | | |
 |---|---|
-| Frontend utilisé | React 18 + Vite, parce que composants réutilisables, écosystème mature, hooks natifs pour état/effets, et Vite pour démarrage rapide |
+| Frontend utilisé | React 18 + Vite, parce que composants réutilisables, écosystème mature, hooks natifs pour état/effets, et Vite pour un démarrage rapide |
 | Base de données | H2 (embedded, démo/test) / PostgreSQL (prod via profil Spring) |
 | Commandes de démarrage | `cd backend && ./mvnw spring-boot:run` (terminal 1) + `cd frontend && npm install && npm run dev` (terminal 2) |
 
 ## Ce que j'ai livré
 
-- **Backend Spring Boot 3.2 / Java 17** : 5 endpoints imposés + extensions (clôture session, présence manuelle, remplacement lien, assignation relecteur), architecture Controller/Service/Repository + DTO, validation centralisée `@RestControllerAdvice` (format erreur `{code, message}`), migrations Flyway versionnées (V1 schema, V2 demo data), 2 tests (unitaire `PresenceServiceTest` + intégration `PresenceControllerIT`), wrapper `mvnw` commité.
-- **Frontend React 18 + Vite** : 3 écrans (Formateur: ouvrir session + tableau ; Étudiant: présence + dépôt exercice ; Relecture: note + commentaire), couche API centralisée TanStack Query (`src/api/client.ts`), états chargement/erreur gérés, aucune règle métier dupliquée (moyenne via API), React Router, Zustand pour auth client-side.
-- **Diagrammes Mermaid** : D1 cas d'utilisation, D2 modèle données, D3 séquence présence (nominal + 410/409), D4 états-transitions exercice (bonus).
-- **Documentation** : `docs/CAHIER_DES_CHARGES.md` (10 sections, 12 EF, 18 RG, contradictions Q10/Q15 tranchées, trou « seul présent » identifié), `docs/JOURNAL.md` (entrées étapes 1-2), `README.md` testé clone vierge.
+- **Backend Spring Boot 3.2 / Java 17** : 5 endpoints imposés + extensions (clôture session, présence manuelle, remplacement lien, assignation 2 relecteurs), architecture Controller/Service/Repository + DTO, validation centralisée `@RestControllerAdvice` (format erreur `{code, message}`), migrations Flyway versionnées (V1 schema, V2 demo data, V3 deux relecteurs), 2 tests (unitaire `PresenceServiceTest` + intégration `PresenceControllerIT`), wrapper `mvnw` commité.
+- **Frontend React 18 + Vite** : 3 écrans (Formateur: ouvrir session + tableau ; Étudiant: présence + dépôt exercice ; Relecture: note + commentaire par ordre 1/2), couche API centralisée TanStack Query (`src/api/client.ts`), états chargement/erreur gérés, aucune règle métier dupliquée (moyenne via API), React Router, Zustand pour auth client-side.
+- **Diagrammes Mermaid** : D1 cas d'utilisation, D2 modèle données (2 relecteurs), D3 séquence présence (nominal + 410/409), D4 états-transitions exercice (2 relecteurs : EN_ATTENTE_1/2, RELECTURE_1/2_RENDUE, RELU).
+- **Documentation** : `docs/CAHIER_DES_CHARGES.md` (10 sections, 12 EF, 20 RG, contradictions Q10/Q15 tranchées, trou « seul présent » identifié, section 7.3 enveloppe), `docs/JOURNAL.md` (entrées étapes 1-3), `README.md` testé clone vierge.
 - **Git** : Historique propre, commits atomiques, branches par feature, 3 jalons `[JALON] analyse` `[JALON] v0.1` `[JALON] v1.0`, `.gitignore` Java+Node en premier commit.
 
 ---
