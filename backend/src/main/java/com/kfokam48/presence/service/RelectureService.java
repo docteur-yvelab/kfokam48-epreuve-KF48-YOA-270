@@ -6,6 +6,7 @@ import com.kfokam48.presence.entity.Exercice;
 import com.kfokam48.presence.entity.Relecture;
 import com.kfokam48.presence.entity.Etudiant;
 import com.kfokam48.presence.exception.AucunEtudiantPresentException;
+import com.kfokam48.presence.exception.EtudiantInconnuException;
 import com.kfokam48.presence.exception.AutoRelectureException;
 import com.kfokam48.presence.exception.NoteInvalideException;
 import com.kfokam48.presence.exception.RelectureDejaRendueException;
@@ -185,13 +186,21 @@ public class RelectureService {
     }
 
     public List<RelectureResponse> getRelecturesByRelecteur(Long relecteurId) {
+        verifierEtudiant(relecteurId);
         return relectureRepository.findByRelecteurId(relecteurId)
                 .stream()
                 .map(this::toResponse)
                 .toList();
     }
 
+    private void verifierEtudiant(Long etudiantId) {
+        if (etudiantId == null || !etudiantRepository.existsById(etudiantId)) {
+            throw new EtudiantInconnuException();
+        }
+    }
+
     public List<RelectureResponse> getRelecturesEnAttentePourRelecteur(Long relecteurId) {
+        verifierEtudiant(relecteurId);
         return relectureRepository.findByRelecteurId(relecteurId)
                 .stream()
                 .filter(r -> (r.getNote() == 0 && r.getCommentaire().isEmpty()) && !r.getExercice().getSession().isCloturee())
@@ -215,6 +224,11 @@ public class RelectureService {
                 .commentaire(relecture.getCommentaire())
                 .dateSoumission(relecture.getDateSoumission())
                 .dateModification(relecture.getDateModification())
+                // FIX : le flag était maintenu en base mais jamais exposé par l'API
+                .noteProvisoire(Boolean.TRUE.equals(relecture.getNoteProvisoire()))
+                .exerciceLien(relecture.getExercice().getLien())
+                // Tant que la relecture n'est pas rendue, dateSoumission == date d'assignation
+                .dateAssignation(relecture.getDateSoumission())
                 .build();
     }
 }

@@ -18,4 +18,10 @@ public class RelectureResponse {
     private LocalDateTime dateSoumission;
     private LocalDateTime dateModification;
     private Boolean noteProvisoire;
+
+    /** Lien de l'exercice relu (requis par GET /api/relectures/en-attente du contrat). */
+    private String exerciceLien;
+
+    /** Date d'assignation de la relecture (requise par le contrat). */
+    private LocalDateTime dateAssignation;
 }

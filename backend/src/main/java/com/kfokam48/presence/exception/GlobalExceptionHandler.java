@@ -2,6 +2,7 @@ package com.kfokam48.presence.exception;
 
 import com.kfokam48.presence.dto.ErrorResponse;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -22,8 +24,9 @@ public class GlobalExceptionHandler {
             case "DEJA_PRESENT", "EXERCICE_DEJA_DEPOSE", "RELECTURE_DEJA_RENDUE" -> HttpStatus.CONFLICT;
             case "NOTE_INVALIDE", "LIEN_INVALIDE" -> HttpStatus.BAD_REQUEST;
             case "AUTO_RELECTURE" -> HttpStatus.FORBIDDEN;
-            case "PROMOTION_INCONNUE" -> HttpStatus.NOT_FOUND;
+            case "PROMOTION_INCONNUE", "SESSION_INCONNUE", "EXERCICE_INCONNU", "ETUDIANT_INCONNU" -> HttpStatus.NOT_FOUND;
             case "SESSION_CLOTUREE", "RELECTURE_NON_MODIFIABLE" -> HttpStatus.CONFLICT;
+            case "SESSION_DEJA_CLOTUREE", "RELECTURE_DEJA_COMMENCEE" -> HttpStatus.CONFLICT;
             case "AUCUNE_RELECTURE", "AUCUN_ETUDIANT_PRESENT" -> HttpStatus.CONFLICT;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
@@ -48,6 +51,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
+        // Point 3 : une trace est TOUJOURS enregistrée, sinon les erreurs sont invisibles
+        log.error("Erreur inattendue non gérée : {}", ex.getMessage(), ex);
         return ResponseEntity.internalServerError()
                 .body(new ErrorResponse("ERREUR_INTERNE", "Une erreur inattendue est survenue."));
     }

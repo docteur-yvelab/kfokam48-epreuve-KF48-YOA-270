@@ -1,14 +1,20 @@
 package com.kfokam48.presence.service;
 
+import com.kfokam48.presence.dto.ExerciceDetailResponse;
+import com.kfokam48.presence.dto.ExerciceLienResponse;
 import com.kfokam48.presence.dto.ExerciceRequest;
 import com.kfokam48.presence.dto.ExerciceResponse;
 import com.kfokam48.presence.dto.RelectureResponse;
 import com.kfokam48.presence.entity.Exercice;
 import com.kfokam48.presence.entity.Session;
 import com.kfokam48.presence.entity.Etudiant;
+import com.kfokam48.presence.exception.EtudiantInconnuException;
 import com.kfokam48.presence.exception.ExerciceDejaDeposeException;
+import com.kfokam48.presence.exception.ExerciceInconnuException;
 import com.kfokam48.presence.exception.LienInvalideException;
+import com.kfokam48.presence.exception.RelectureDejaCommenceeException;
 import com.kfokam48.presence.exception.SessionClotureeException;
+import com.kfokam48.presence.exception.SessionInconnueException;
 import com.kfokam48.presence.repository.ExerciceRepository;
 import com.kfokam48.presence.repository.SessionRepository;
 import com.kfokam48.presence.repository.EtudiantRepository;
@@ -33,7 +39,7 @@ public class ExerciceService {
 
     public ExerciceResponse deposerExercice(ExerciceRequest request) {
         Session session = sessionRepository.findById(request.getSessionId())
-                .orElseThrow(() -> new IllegalArgumentException("Session introuvable"));
+                .orElseThrow(SessionInconnueException::new);
 
         if (session.isCloturee()) {
             throw new SessionClotureeException();
@@ -46,7 +52,7 @@ public class ExerciceService {
         }
 
         Etudiant etudiant = etudiantRepository.findById(request.getEtudiantId())
-                .orElseThrow(() -> new IllegalArgumentException("Étudiant introuvable"));
+                .orElseThrow(EtudiantInconnuException::new);
 
         Exercice exercice = Exercice.builder()
                 .session(session)
@@ -64,33 +70,70 @@ public class ExerciceService {
         return toResponse(exercice);
     }
 
-    public ExerciceResponse remplacerLien(Long exerciceId, String nouveauLien) {
+    public ExerciceLienResponse remplacerLien(Long exerciceId, String nouveauLien) {
         Exercice exercice = exerciceRepository.findById(exerciceId)
-                .orElseThrow(() -> new IllegalArgumentException("Exercice introuvable"));
+                .orElseThrow(ExerciceInconnuException::new);
 
         if (exercice.getSession().isCloturee()) {
             throw new SessionClotureeException();
         }
 
         if (exercice.getStatut() != Exercice.StatutExercice.DEPOSE) {
-            throw new IllegalStateException("Le lien ne peut être remplacé que si aucune relecture n'a commencé");
+            throw new RelectureDejaCommenceeException();
         }
 
         validerLien(nouveauLien);
         exercice.setLien(nouveauLien);
         exercice.setDateModifLien(LocalDateTime.now());
         exercice = exerciceRepository.save(exercice);
-        return toResponse(exercice);
+        return ExerciceLienResponse.builder()
+                .id(exercice.getId())
+                .lien(exercice.getLien())
+                .dateModifLien(exercice.getDateModifLien())
+                .build();
     }
 
-    public ExerciceResponse getExerciceAvecRelectures(Long exerciceId) {
+    /** GET /api/exercices?sessionId=&etudiantId= (contrat) — 0 ou 1 exercice (unicité session+étudiant). */
+    public List<ExerciceDetailResponse> listerParEtudiant(Long sessionId, Long etudiantId) {
+        sessionRepository.findById(sessionId).orElseThrow(SessionInconnueException::new);
+        etudiantRepository.findById(etudiantId).orElseThrow(EtudiantInconnuException::new);
+        return exerciceRepository.findBySessionIdAndEtudiantId(sessionId, etudiantId)
+                .map(exercice -> List.of(toDetailResponse(exercice)))
+                .orElseGet(() -> List.of());
+    }
+
+    /** GET /api/exercices/{id} (contrat) — détail utilisé par l'écran de relecture. */
+    public ExerciceDetailResponse getExerciceDetail(Long exerciceId) {
         Exercice exercice = exerciceRepository.findById(exerciceId)
-                .orElseThrow(() -> new IllegalArgumentException("Exercice introuvable"));
-        return toResponseAvecRelectures(exercice);
+                .orElseThrow(ExerciceInconnuException::new);
+        return toDetailResponse(exercice);
     }
 
-    public List<RelectureResponse> getRelecturesByExercice(Long exerciceId) {
-        return relectureService.getRelecturesByExercice(exerciceId);
+    private ExerciceDetailResponse toDetailResponse(Exercice exercice) {
+        List<RelectureResponse> relectures = relectureService.getRelecturesByExercice(exercice.getId());
+        RelectureResponse rendue = relectures.stream()
+                .filter(r -> estRendue(r))
+                .findFirst()
+                .orElse(null);
+        return ExerciceDetailResponse.builder()
+                .id(exercice.getId())
+                .sessionId(exercice.getSession().getId())
+                .etudiantId(exercice.getEtudiant().getId())
+                .lien(exercice.getLien())
+                .statut(exercice.getStatut().name())
+                .dateDepot(exercice.getDateDepot())
+                .note(rendue != null ? rendue.getNote() : null)
+                .commentaire(rendue != null ? rendue.getCommentaire() : null)
+                // "relecture" : objet singulier exigé par le contrat ; "relectures" : les 2, pour le frontend
+                .relecture(relectures.isEmpty() ? null : relectures.get(0))
+                .relectures(relectures)
+                .build();
+    }
+
+    private boolean estRendue(RelectureResponse r) {
+        boolean noteRendue = r.getNote() != null && r.getNote() != 0;
+        boolean commentaireRendu = r.getCommentaire() != null && !r.getCommentaire().isEmpty();
+        return noteRendue || commentaireRendu;
     }
 
     private void validerLien(String lien) {
@@ -99,6 +142,10 @@ public class ExerciceService {
         } catch (URISyntaxException e) {
             throw new LienInvalideException();
         }
+    }
+
+    public List<RelectureResponse> getRelecturesByExercice(Long exerciceId) {
+        return relectureService.getRelecturesByExercice(exerciceId);
     }
 
     private ExerciceResponse toResponse(Exercice exercice) {

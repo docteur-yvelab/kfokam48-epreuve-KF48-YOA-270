@@ -48,11 +48,14 @@ public class RelectureController {
 
     /**
      * Liste les relectures en attente pour un relecteur (étudiant).
+     * Accepte etudiantId en paramètre de requête (contrat) OU en header X-Etudiant-Id (frontend).
      */
     @GetMapping("/en-attente")
     public ResponseEntity<List<RelectureResponse>> getRelecturesEnAttente(
-            @RequestHeader("X-Etudiant-Id") Long relecteurId) {
-        List<RelectureResponse> response = relectureService.getRelecturesEnAttentePourRelecteur(relecteurId);
+            @RequestParam(value = "etudiantId", required = false) Long etudiantId,
+            @RequestHeader(value = "X-Etudiant-Id", required = false) Long headerEtudiantId) {
+        List<RelectureResponse> response =
+                relectureService.getRelecturesEnAttentePourRelecteur(resoudreEtudiantId(etudiantId, headerEtudiantId));
         return ResponseEntity.ok(response);
     }
 
@@ -61,8 +64,14 @@ public class RelectureController {
      */
     @GetMapping("/mes-relectures")
     public ResponseEntity<List<RelectureResponse>> getMesRelectures(
-            @RequestHeader("X-Etudiant-Id") Long relecteurId) {
-        List<RelectureResponse> response = relectureService.getRelecturesByRelecteur(relecteurId);
+            @RequestParam(value = "etudiantId", required = false) Long etudiantId,
+            @RequestHeader(value = "X-Etudiant-Id", required = false) Long headerEtudiantId) {
+        List<RelectureResponse> response =
+                relectureService.getRelecturesByRelecteur(resoudreEtudiantId(etudiantId, headerEtudiantId));
         return ResponseEntity.ok(response);
+    }
+
+    private Long resoudreEtudiantId(Long queryParam, Long header) {
+        return queryParam != null ? queryParam : header;
     }
 }

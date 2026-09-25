@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -52,53 +53,62 @@ public class TableauService {
         // Pour chaque étudiant (auteur d'exercices), calculer la moyenne de ses exercices
         // et déterminer si la moyenne est provisoire (une seule relecture sur au moins un exercice)
         List<Exercice> tousExercices = exerciceRepository.findAllByEtudiantIdIn(etudiantIds);
-        
-        Map<Long, Double> moyenneParEtudiant = tousExercices.stream()
-                .collect(Collectors.groupingBy(
-                        e -> e.getEtudiant().getId(),
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                exercices -> {
-                                    // Pour chaque exercice, calculer la moyenne de ses 2 relectures
-                                    List<Double> moyennesExercices = exercices.stream()
-                                            .map(ex -> {
-                                                List<Relecture> relectures = relectureRepository.findByExerciceIdOrderByOrdreRelecteurAsc(ex.getId());
-                                                List<Integer> notes = relectures.stream()
-                                                        .filter(r -> r.getNote() != 0 || !r.getCommentaire().isEmpty())
-                                                        .map(Relecture::getNote)
-                                                        .toList();
-                                                if (notes.isEmpty()) return null;
-                                                return notes.stream().mapToInt(Integer::intValue).average().orElse(null);
-                                            })
-                                            .filter(m -> m != null)
-                                            .toList();
-                                    if (moyennesExercices.isEmpty()) return null;
-                                    return moyennesExercices.stream().mapToDouble(Double::doubleValue).average().orElse(null);
-                                }
-                        )
-                ));
 
-        // Déterminer si la moyenne est provisoire pour chaque étudiant
-        // Une moyenne est provisoire si au moins un exercice a une seule relecture rendue
-        Map<Long, Boolean> moyenneProvisoireParEtudiant = tousExercices.stream()
-                .collect(Collectors.groupingBy(
-                        e -> e.getEtudiant().getId(),
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                exercices -> exercices.stream().anyMatch(ex -> {
-                                    List<Relecture> relectures = relectureRepository.findByExerciceIdOrderByOrdreRelecteurAsc(ex.getId());
-                                    long countRendues = relectures.stream()
-                                            .filter(r -> r.getNote() != 0 || !r.getCommentaire().isEmpty())
-                                            .count();
-                                    return countRendues == 1;
-                                })
-                        )
-                ));
+        // Calculer la moyenne par étudiant (moyenne des moyennes d'exercices)
+        Map<Long, Double> moyenneParEtudiant = new java.util.HashMap<>();
+        Map<Long, Boolean> moyenneProvisoireParEtudiant = new java.util.HashMap<>();
+
+        for (Exercice ex : tousExercices) {
+            Long etudiantId = ex.getEtudiant().getId();
+            List<Relecture> relectures = relectureRepository.findByExerciceIdOrderByOrdreRelecteurAsc(ex.getId());
+
+            List<Integer> notes = relectures.stream()
+                    .filter(r -> r.getNote() != 0 || !r.getCommentaire().isEmpty())
+                    .map(Relecture::getNote)
+                    .toList();
+
+            if (!notes.isEmpty()) {
+                double moyenneEx = notes.stream().mapToInt(Integer::intValue).average().orElse(0.0);
+                
+                // Mettre à jour la moyenne par étudiant (moyenne des moyennes d'exercices)
+                List<Double> moyennesExistantes = new ArrayList<>();
+                // On récupère les exercices déjà traités pour cet étudiant
+                for (Exercice ex2 : tousExercices) {
+                    if (ex2.getEtudiant().getId().equals(etudiantId)) {
+                        List<Relecture> r2 = relectureRepository.findByExerciceIdOrderByOrdreRelecteurAsc(ex2.getId());
+                        List<Integer> n2 = r2.stream()
+                                .filter(r -> r.getNote() != 0 || !r.getCommentaire().isEmpty())
+                                .map(Relecture::getNote)
+                                .toList();
+                        if (!n2.isEmpty()) {
+                            double m = n2.stream().mapToInt(Integer::intValue).average().orElse(0.0);
+                            moyennesExistantes.add(m);
+                        }
+                    }
+                }
+                double moyenneEtudiant = moyennesExistantes.stream().mapToDouble(d -> d).average().orElse(0.0);
+                moyenneParEtudiant.put(etudiantId, moyenneEtudiant);
+
+                // Déterminer si provisoire
+                boolean provisoire = false;
+                for (Exercice ex2 : tousExercices) {
+                    if (ex2.getEtudiant().getId().equals(etudiantId)) {
+                        List<Relecture> r2 = relectureRepository.findByExerciceIdOrderByOrdreRelecteurAsc(ex2.getId());
+                        long countRendues = r2.stream()
+                                .filter(r -> r.getNote() != 0 || !r.getCommentaire().isEmpty())
+                                .count();
+                        if (countRendues == 1) {
+                            provisoire = true;
+                            break;
+                        }
+                    }
+                }
+                moyenneProvisoireParEtudiant.put(etudiantId, provisoire);
+            }
+        }
 
         // Relectures en attente par relecteur (pour affichage dans tableau)
-        Map<Long, Long> relecturesEnAttenteParRelecteur = relectureRepository.findAllByRelecteurIdIn(etudiantIds).stream()
-                .filter(r -> (r.getNote() == 0 && r.getCommentaire().isEmpty()) && !r.getExercice().getSession().isCloturee())
-                .collect(Collectors.groupingBy(r -> r.getRelecteur().getId(), Collectors.counting()));
+        // Already computed above
 
         return etudiants.stream()
                 .map(e -> TableauEtudiantResponse.builder()
