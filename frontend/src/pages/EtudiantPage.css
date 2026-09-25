@@ -343,3 +343,258 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* === NOUVEAUX STYLES IDENTIFICATION === */
+.identification-card {
+  border: 2px solid #dbeafe;
+  background: #f0f5ff;
+}
+
+.identification-card h3 {
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.identification-hint {
+  margin: 0 0 16px;
+  color: #1e40af;
+  font-weight: 500;
+}
+
+.etudiant-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+}
+
+.etudiant-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.etudiant-card.selected .etudiant-avatar {
+  background: linear-gradient(135deg, #1d4ed8, #1e3a5f);
+  box-shadow: 0 4px 16px rgba(29, 78, 216, 0.4);
+}
+
+.identification-note {
+  margin: 16px 0 0;
+  padding: 12px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.user-connected {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #f0fdf4;
+  border-radius: 10px;
+  border: 1px solid #bbf7d0;
+}
+
+.user-avatar-large {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+  flex-shrink: 0;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-info strong {
+  font-size: 1.1rem;
+  color: #166534;
+}
+
+.user-promo {
+  font-size: 0.85rem;
+  color: #16a34a;
+  font-weight: 500;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid #d1d9e0;
+  color: #5a6a7a;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: #f0f3f7;
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.etudiant-card[aria-selected="true"] {
+  border-color: #3b82f6;
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+/* Amélioration session status */
+.session-status {
+  position: relative;
+}
+
+.session-status::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 4px 0 0 4px;
+}
+
+.session-status.ouverte::before {
+  background: #22c55e;
+}
+
+.session-status.expiree::before {
+  background: #ef4444;
+}
+
+.session-status.cloturee::before {
+  background: #a3a3a3;
+}
+
+/* Empty state amélioré */
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: #8a9aa9;
+}
+
+.empty-state p:first-child {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #5a6a7a;
+  margin-bottom: 8px;
+}
+
+/* Relecture results améliorés */
+.relecture-result {
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin: 8px 0;
+  border-left: 4px solid #3b82f6;
+}
+
+.relecture-result.provisoire {
+  border-left-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.provisoire-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: #fef3c7;
+  color: #b45309;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.moyenne-display {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+  font-size: 1.1rem;
+}
+
+.moyenne-display.provisoire {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.already-submitted {
+  padding: 16px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+}
+
+.already-submitted h4 {
+  margin: 0 0 12px;
+  color: #166534;
+}
+
+.already-submitted p {
+  margin: 6px 0;
+  color: #166534;
+}
+
+.already-submitted .hint {
+  color: #16a34a;
+  font-weight: 500;
+}
+
+/* Badges ordre relecture */
+.ordre-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Action area amélioré */
+.action-area {
+  width: 100%;
+}
+
+.btn-large {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Form depot */
+.form-depot {
+  width: 100%;
+}
+
+.input-large {
+  width: 100%;
+}
