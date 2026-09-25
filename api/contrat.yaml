@@ -16,6 +16,7 @@ paths:
   /api/sessions:
     post:
       summary: Le formateur ouvre une session et obtient un code de présence
+      operationId: ouvrirSession
       requestBody:
         required: true
         content:
@@ -40,10 +41,89 @@ paths:
                   ouvertureAt: { type: string, format: date-time }
                   expirationAt: { type: string, format: date-time }
         "400": { $ref: "#/components/responses/Erreur" }
+        "404": { $ref: "#/components/responses/Erreur" }   # PROMOTION_INCONNUE
+
+    get:
+      summary: Liste les sessions d'une promotion
+      operationId: listerSessionsPromotion
+      parameters:
+        - name: promotionId
+          in: query
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Liste des sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, titre, code, ouvertureAt, expirationAt, cloturee]
+                  properties:
+                    id: { type: integer, format: int64 }
+                    titre: { type: string }
+                    code: { type: string }
+                    ouvertureAt: { type: string, format: date-time }
+                    expirationAt: { type: string, format: date-time }
+                    cloturee: { type: boolean }
+        "404": { $ref: "#/components/responses/Erreur" }   # PROMOTION_INCONNUE
+
+  /api/sessions/{id}:
+    get:
+      summary: Récupère les détails d'une session
+      operationId: getSession
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Détails de la session
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, titre, code, ouvertureAt, expirationAt, cloturee, promotionId]
+                properties:
+                  id: { type: integer, format: int64 }
+                  titre: { type: string }
+                  code: { type: string }
+                  ouvertureAt: { type: string, format: date-time }
+                  expirationAt: { type: string, format: date-time }
+                  cloturee: { type: boolean }
+                  promotionId: { type: integer, format: int64 }
+        "404": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE
+
+    patch:
+      summary: Clôture une session (verrouille tout)
+      operationId: cloturerSession
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Session clôturée
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, cloturee, clotureAt]
+                properties:
+                  id: { type: integer, format: int64 }
+                  cloturee: { type: boolean }
+                  clotureAt: { type: string, format: date-time }
+        "404": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE
+        "409": { $ref: "#/components/responses/Erreur" }   # SESSION_DEJA_CLOTUREE
 
   /api/presences:
     post:
       summary: Un étudiant marque sa présence avec le code
+      operationId: marquerPresence
       requestBody:
         required: true
         content:
@@ -70,10 +150,43 @@ paths:
         "400": { $ref: "#/components/responses/Erreur" }   # CODE_INCONNU
         "409": { $ref: "#/components/responses/Erreur" }   # DEJA_PRESENT
         "410": { $ref: "#/components/responses/Erreur" }   # CODE_EXPIRE
+        "429": { $ref: "#/components/responses/Erreur" }   # TROP_ESSAIS (RG12)
+
+  /api/presences/manuelle:
+    post:
+      summary: Le formateur ajoute une présence manuelle
+      operationId: ajouterPresenceManuelle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sessionId, etudiantId]
+              properties:
+                sessionId: { type: integer, format: int64 }
+                etudiantId: { type: integer, format: int64 }
+      responses:
+        "201":
+          description: Présence manuelle enregistrée
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, sessionId, etudiantId, source]
+                properties:
+                  id: { type: integer, format: int64 }
+                  sessionId: { type: integer, format: int64 }
+                  etudiantId: { type: integer, format: int64 }
+                  source: { type: string, enum: [FORMATEUR] }
+        "400": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE, ETUDIANT_INCONNU
+        "409": { $ref: "#/components/responses/Erreur" }   # DEJA_PRESENT
+        "410": { $ref: "#/components/responses/Erreur" }   # SESSION_CLOTUREE (implicitement expirée)
 
   /api/exercices:
     post:
       summary: Un étudiant dépose le lien de son exercice
+      operationId: deposerExercice
       requestBody:
         required: true
         content:
@@ -95,13 +208,115 @@ paths:
                 required: [id, statut]
                 properties:
                   id: { type: integer, format: int64 }
-                  statut: { type: string }
-        "400": { $ref: "#/components/responses/Erreur" }   # LIEN_INVALIDE
+                  statut: { type: string, enum: [DEPOSE, EN_ATTENTE_RELECTURE] }
+        "400": { $ref: "#/components/responses/Erreur" }   # LIEN_INVALIDE, SESSION_INCONNUE, SESSION_CLOTUREE
         "409": { $ref: "#/components/responses/Erreur" }   # EXERCICE_DEJA_DEPOSE
+        "410": { $ref: "#/components/responses/Erreur" }   # SESSION_CLOTUREE
+
+    get:
+      summary: Liste les exercices d'un étudiant pour une session
+      operationId: listerExercicesEtudiant
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema: { type: integer, format: int64 }
+        - name: etudiantId
+          in: query
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Liste des exercices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, sessionId, etudiantId, lien, statut, dateDepot]
+                  properties:
+                    id: { type: integer, format: int64 }
+                    sessionId: { type: integer, format: int64 }
+                    etudiantId: { type: integer, format: int64 }
+                    lien: { type: string }
+                    statut: { type: string, enum: [DEPOSE, EN_ATTENTE_RELECTURE, RELU] }
+                    dateDepot: { type: string, format: date-time }
+                    note: { type: integer, nullable: true }
+                    commentaire: { type: string, nullable: true }
+
+  /api/exercices/{id}:
+    get:
+      summary: Récupère les détails d'un exercice (pour relecture)
+      operationId: getExercice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Détails de l'exercice
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, sessionId, etudiantId, lien, statut, dateDepot]
+                properties:
+                  id: { type: integer, format: int64 }
+                  sessionId: { type: integer, format: int64 }
+                  etudiantId: { type: integer, format: int64 }
+                  lien: { type: string }
+                  statut: { type: string, enum: [DEPOSE, EN_ATTENTE_RELECTURE, RELU] }
+                  dateDepot: { type: string, format: date-time }
+                  relecture:
+                    type: object
+                    nullable: true
+                    properties:
+                      id: { type: integer, format: int64 }
+                      relecteurId: { type: integer, format: int64 }
+                      note: { type: integer }
+                      commentaire: { type: string }
+                      dateSoumission: { type: string, format: date-time }
+        "404": { $ref: "#/components/responses/Erreur" }   # EXERCICE_INCONNU
+
+    put:
+      summary: Remplace le lien d'un exercice (tant que pas de relecture)
+      operationId: remplacerLienExercice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lien]
+              properties:
+                lien: { type: string, format: uri }
+      responses:
+        "200":
+          description: Lien remplacé
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, lien, dateModifLien]
+                properties:
+                  id: { type: integer, format: int64 }
+                  lien: { type: string }
+                  dateModifLien: { type: string, format: date-time }
+        "400": { $ref: "#/components/responses/Erreur" }   # LIEN_INVALIDE
+        "404": { $ref: "#/components/responses/Erreur" }   # EXERCICE_INCONNU
+        "409": { $ref: "#/components/responses/Erreur" }   # RELECTURE_DEJA_COMMENCEE, SESSION_CLOTUREE
 
   /api/relectures/{id}:
     post:
       summary: Un relecteur rend sa note et son commentaire
+      operationId: soumettreRelecture
       parameters:
         - name: id
           in: path
@@ -118,14 +333,77 @@ paths:
                 note: { type: integer, minimum: 0, maximum: 20 }
                 commentaire: { type: string }
       responses:
-        "200": { description: Relecture enregistrée }
-        "400": { $ref: "#/components/responses/Erreur" }   # NOTE_INVALIDE
+        "200":
+          description: Relecture enregistrée
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, note, commentaire, dateSoumission]
+                properties:
+                  id: { type: integer, format: int64 }
+                  note: { type: integer }
+                  commentaire: { type: string }
+                  dateSoumission: { type: string, format: date-time }
+        "400": { $ref: "#/components/responses/Erreur" }   # NOTE_INVALIDE, EXERCICE_INCONNU
         "403": { $ref: "#/components/responses/Erreur" }   # AUTO_RELECTURE
-        "409": { $ref: "#/components/responses/Erreur" }   # RELECTURE_DEJA_RENDUE
+        "409": { $ref: "#/components/responses/Erreur" }   # RELECTURE_DEJA_RENDUE, SESSION_CLOTUREE
+
+  /api/relectures/en-attente:
+    get:
+      summary: Liste les relectures en attente pour un étudiant (relecteur)
+      operationId: listerRelecturesEnAttente
+      parameters:
+        - name: etudiantId
+          in: query
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Relectures assignées non rendues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, exerciceId, exerciceLien, dateAssignation]
+                  properties:
+                    id: { type: integer, format: int64 }
+                    exerciceId: { type: integer, format: int64 }
+                    exerciceLien: { type: string }
+                    dateAssignation: { type: string, format: date-time }
+        "404": { $ref: "#/components/responses/Erreur" }   # ETUDIANT_INCONNU
+
+  /api/promotions/{id}/etudiants:
+    get:
+      summary: Liste les étudiants d'une promotion (pour sélection nom)
+      operationId: listerEtudiantsPromotion
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Liste des étudiants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, nom, prenom]
+                  properties:
+                    id: { type: integer, format: int64 }
+                    nom: { type: string }
+                    prenom: { type: string }
+        "404": { $ref: "#/components/responses/Erreur" }   # PROMOTION_INCONNUE
 
   /api/tableau:
     get:
       summary: Le tableau récapitulatif du formateur
+      operationId: getTableau
       parameters:
         - name: promotionId
           in: query
@@ -163,6 +441,7 @@ components:
         message:
           type: string
           description: Phrase lisible par un humain, en français
+
   responses:
     Erreur:
       description: |
@@ -175,3 +454,11 @@ components:
           example:
             code: CODE_EXPIRE
             message: Le code de présence a expiré.
+
+    # Codes d'erreur étendus (référencés dans les endpoints ci-dessus)
+    # 400: CODE_INCONNU, LIEN_INVALIDE, NOTE_INVALIDE, SESSION_INCONNUE, ETUDIANT_INCONNU, EXERCICE_INCONNU
+    # 403: AUTO_RELECTURE
+    # 404: PROMOTION_INCONNUE, SESSION_INCONNUE, EXERCICE_INCONNU, ETUDIANT_INCONNU
+    # 409: DEJA_PRESENT, EXERCICE_DEJA_DEPOSE, RELECTURE_DEJA_RENDUE, SESSION_DEJA_CLOTUREE, RELECTURE_DEJA_COMMENCEE
+    # 410: CODE_EXPIRE, SESSION_CLOTUREE
+    # 429: TROP_ESSAIS
