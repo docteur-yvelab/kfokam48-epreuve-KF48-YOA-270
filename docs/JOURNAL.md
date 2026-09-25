@@ -14,11 +14,11 @@ Chaque entrée répond aux trois mêmes questions :
 
 ## Étape 1 — Analyse et conception
 
-**Fait :** cahier des charges (9 exigences fonctionnelles, 12 règles de gestion), les trois diagrammes en Mermaid, 11 issues créées, contrat d'API complété, commit `[JALON] analyse` poussé.
+**Fait :** Cahier des charges complet (10 sections, 12 EF, 18 RG, contradictions Q10/Q15 tranchées en faveur de Q10, trou « seul étudiant présent » identifié), structure dépôt initialisée, `.gitignore` Java+Node commité en premier, `README.md` avec justification frontend, contrat API copié, modèle docs copiés, commit `[JALON] analyse` poussé (historique : .gitignore → structure → jalon analyse → README → cahier des charges sur develop).
 
-**Bloqué :** 12 min sur la contradiction entre Q10 et Q15. Tranchée en faveur de Q10 : Q11 décrit un usage réel et concret du formateur, Q15 n'est qu'une intention générale. Noté en section 7.
+**Bloqué :** 15 min sur la contradiction Q10 vs Q15. Tranchée pour Q10 (usage concret Q11) avec RG13/RG14 cohérents. 10 min sur le trou « seul présent » : décision = assignation échoue silencieusement, exercice reste DEPOSE.
 
-**IA :** m'a proposé un découpage en 18 tickets, j'en ai retenu 11. Les autres étaient des tâches techniques (« créer l'entité », « configurer Flyway »), pas des résultats utilisateur. Vérifié en relisant chaque titre : est-ce que le client le comprendrait ?
+**IA :** Aidé à structurer le cahier des charges (10 sections), lister les RG exhaustives depuis CLIENT.md + contrat, formuler les EF avec critères vérifiables. Vérifié : chaque RG cite sa source Qx, chaque EF a un critère « quand… alors… », contradictions documentées avec justification.
 
 ---
 
