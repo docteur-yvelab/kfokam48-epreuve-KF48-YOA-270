@@ -60,10 +60,11 @@ export const exerciceApi = {
 };
 
 export const relectureApi = {
-  soumettre: (id: number, data: { note: number; commentaire: string }) =>
-    api.post(`/api/relectures/${id}`, data),
+  soumettre: (exerciceId: number, ordreRelecteur: 1 | 2, data: { note: number; commentaire: string }) =>
+    api.post(`/api/relectures/${exerciceId}`, { ...data, ordreRelecteur }),
   getByExercice: (exerciceId: number) => api.get(`/api/relectures/exercice/${exerciceId}`),
   getEnAttente: (etudiantId: number) => api.get(`/api/relectures/en-attente?etudiantId=${etudiantId}`),
+  getMesRelectures: (etudiantId: number) => api.get(`/api/relectures/mes-relectures?etudiantId=${etudiantId}`),
 };
 
 export const promotionApi = {
