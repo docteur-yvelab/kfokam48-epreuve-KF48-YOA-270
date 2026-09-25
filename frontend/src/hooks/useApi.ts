@@ -142,7 +142,8 @@ export function useSoumettreRelecture() {
   const { setLoading, setError } = useUIStore();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: RelectureRequest }) => relectureApi.soumettre(id, data),
+    mutationFn: ({ exerciceId, ordreRelecteur, data }: { exerciceId: number; ordreRelecteur: 1 | 2; data: RelectureRequest }) => 
+      relectureApi.soumettre(exerciceId, ordreRelecteur, data),
     onMutate: () => setLoading('soumettreRelecture', true),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['relectures-en-attente'] });

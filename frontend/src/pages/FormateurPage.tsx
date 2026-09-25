@@ -176,7 +176,12 @@ export default function FormateurPage() {
                     <td className="center">{row.presences}</td>
                     <td className="center">{row.exercicesDeposes}</td>
                     <td className="center">
-                      {row.moyenne !== null ? row.moyenne.toFixed(1) : '—'}
+                      {row.moyenne !== null ? (
+                        <>
+                          {row.moyenne.toFixed(1)}
+                          {row.moyenneProvisoire && <span className="provisoire-badge"> (provisoire)</span>}
+                        </>
+                      ) : '—'}
                     </td>
                     <td className="center">
                       {row.relecturesEnAttente > 0 ? (

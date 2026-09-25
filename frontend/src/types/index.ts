@@ -38,6 +38,16 @@ export interface ExerciceResponse {
   statut: 'DEPOSE' | 'EN_ATTENTE_RELECTURE' | 'RELU';
 }
 
+export interface RelectureDetail {
+  id: number;
+  ordreRelecteur: 1 | 2;
+  relecteurId: number;
+  note: number | null;
+  commentaire: string | null;
+  dateSoumission: string | null;
+  noteProvisoire: boolean;
+}
+
 export interface ExerciceDetail {
   id: number;
   sessionId: number;
@@ -45,34 +55,32 @@ export interface ExerciceDetail {
   lien: string;
   statut: 'DEPOSE' | 'EN_ATTENTE_RELECTURE' | 'RELU';
   dateDepot: string;
-  relecture?: {
-    id: number;
-    relecteurId: number;
-    note: number;
-    commentaire: string;
-    dateSoumission: string;
-  };
+  relectures: RelectureDetail[];
 }
 
 export interface RelectureRequest {
   note: number;
   commentaire: string;
+  ordreRelecteur: 1 | 2;
 }
 
 export interface RelectureResponse {
   id: number;
   exerciceId: number;
+  ordreRelecteur: 1 | 2;
   relecteurId: number;
-  note: number;
-  commentaire: string;
-  dateSoumission: string;
+  note: number | null;
+  commentaire: string | null;
+  dateSoumission: string | null;
   dateModification?: string;
+  noteProvisoire: boolean;
 }
 
 export interface RelectureEnAttente {
   id: number;
   exerciceId: number;
   exerciceLien: string;
+  ordreRelecteur: 1 | 2;
   dateAssignation: string;
 }
 
@@ -88,6 +96,7 @@ export interface TableauEtudiantResponse {
   presences: number;
   exercicesDeposes: number;
   moyenne: number | null;
+  moyenneProvisoire: boolean;
   relecturesEnAttente: number;
 }
 

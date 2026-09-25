@@ -11,7 +11,7 @@ function App() {
       <Routes>
         <Route path="/formateur" element={<FormateurPage />} />
         <Route path="/etudiant" element={<EtudiantPage />} />
-        <Route path="/relecture/:id" element={<RelecturePage />} />
+        <Route path="/relecture/:exerciceId/:ordre" element={<RelecturePage />} />
         <Route path="/" element={<Navigate to="/etudiant" replace />} />
         <Route path="*" element={<Navigate to="/etudiant" replace />} />
       </Routes>

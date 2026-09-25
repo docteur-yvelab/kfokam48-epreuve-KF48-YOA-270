@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore, useUIStore } from '../store';
 import { useMarquerPresence, useDeposerExercice, useRemplacerLien, useSessions, useExercices, useEtudiants } from '../hooks/useApi';
-import type { SessionResponse, ExerciceRequest, ExerciceDetail, Etudiant } from '../types';
+import type { SessionResponse, ExerciceRequest, ExerciceDetail, RelectureDetail, Etudiant } from '../types';
 import './EtudiantPage.css';
 
 export default function EtudiantPage() {
@@ -81,6 +81,17 @@ export default function EtudiantPage() {
   const monExercice = exercices?.[0];
   const peutDeposer = sessionOuverte && !monExercice;
   const peutRemplacer = monExercice && monExercice.statut === 'DEPOSE' && sessionOuverte;
+
+  // Calculer la moyenne des 2 relectures pour l'exercice
+  const calculerMoyenne = (relectures: RelectureDetail[]): { moyenne: number | null; provisoire: boolean } => {
+    const notes = relectures
+      .filter(r => r.note !== null && r.commentaire !== null)
+      .map(r => r.note!);
+    if (notes.length === 0) return { moyenne: null, provisoire: false };
+    const moyenne = Math.round(notes.reduce((a, b) => a + b, 0) / notes.length);
+    const provisoire = notes.length === 1;
+    return { moyenne, provisoire };
+  };
 
   return (
     <div className="etudiant-page">
@@ -175,10 +186,27 @@ export default function EtudiantPage() {
                   <div className="exercice-details">
                     <p><strong>Lien :</strong> <a href={monExercice.lien} target="_blank" rel="noopener noreferrer">{truncate(monExercice.lien, 60)}</a></p>
                     <p className="meta">Déposé le {formatDate(monExercice.dateDepot)}</p>
-                    {monExercice.relecture && (
-                      <p className="meta relecture-done">
-                        <strong>Noté :</strong> {monExercice.relecture.note}/20 — {monExercice.relecture.commentaire}
-                      </p>
+                    {monExercice.relectures && monExercice.relectures.length > 0 && (
+                      <>
+                        {monExercice.relectures.map((r: RelectureDetail) => (
+                          <div key={r.ordreRelecteur} className="relecture-result">
+                            <p className={`meta relecture-result ${r.noteProvisoire ? 'provisoire' : ''}`}>
+                              <strong>Relecture {r.ordreRelecteur}/2 :</strong> 
+                              {r.note !== null ? `${r.note}/20 — ${r.commentaire}` : 'En attente'}
+                              {r.noteProvisoire && <span className="provisoire-badge"> (provisoire)</span>}
+                            </p>
+                          </div>
+                        ))}
+                        {(() => {
+                          const { moyenne, provisoire } = calculerMoyenne(monExercice.relectures);
+                          return moyenne !== null && (
+                            <p className={`meta moyenne-display ${provisoire ? 'provisoire' : ''}`}>
+                              <strong>Moyenne : {moyenne}/20</strong>
+                              {provisoire && <span className="provisoire-badge"> (provisoire)</span>}
+                            </p>
+                          );
+                        })()}
+                      </>
                     )}
                   </div>
                 </div>
@@ -310,4 +338,14 @@ function formatRelative(dateStr: string): string {
 
 function truncate(str: string, len: number): string {
   return str.length > len ? str.slice(0, len) + '…' : str;
+}
+
+function calculerMoyenne(relectures: RelectureDetail[]): { moyenne: number | null; provisoire: boolean } {
+  const notes = relectures
+    .filter(r => r.note !== null && r.commentaire !== null)
+    .map(r => r.note!);
+  if (notes.length === 0) return { moyenne: null, provisoire: false };
+  const moyenne = Math.round(notes.reduce((a, b) => a + b, 0) / notes.length);
+  const provisoire = notes.length === 1;
+  return { moyenne, provisoire };
 }
