@@ -1,0 +1,261 @@
+.formateur-page {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h2 {
+  margin: 0 0 4px;
+  color: #2c3e50;
+  font-size: 1.75rem;
+}
+
+.page-header p {
+  margin: 0;
+  color: #8a9aa9;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #eef1f5;
+}
+
+.card h3 {
+  margin: 0 0 16px;
+  color: #3a4a5a;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.session-active {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.session-active p {
+  margin: 4px 0;
+}
+
+.session-active code {
+  background: #fff;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #0369a1;
+  letter-spacing: 0.5px;
+}
+
+.form-inline {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.input {
+  padding: 10px 14px;
+  border: 1px solid #d1d9e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+select.input {
+  cursor: pointer;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  gap: 8px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.btn-secondary {
+  background: #f0f3f7;
+  color: #3a4a5a;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e1e7ee;
+}
+
+.btn-danger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #fecaca;
+}
+
+.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+.loading {
+  padding: 24px;
+  text-align: center;
+  color: #8a9aa9;
+}
+
+.text-muted {
+  color: #8a9aa9;
+  font-size: 0.9rem;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th, td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eef1f5;
+}
+
+th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #5a6a7a;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+td.center {
+  text-align: center;
+}
+
+tbody tr:hover {
+  background: #fafbfc;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge.warning {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  min-width: 320px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  animation: slideUp 0.2s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.code-display {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #1e3a5f;
+  background: #f0f5fa;
+  padding: 24px;
+  border-radius: 12px;
+  margin: 16px 0;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+}
+
+.code-note {
+  color: #6b7b8a;
+  margin: 8px 0 0;
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 16px;
+  }
+  .form-inline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .form-inline .input, .form-inline .btn {
+    width: 100%;
+  }
+  .code-display {
+    font-size: 1.75rem;
+    letter-spacing: 2px;
+  }
+}

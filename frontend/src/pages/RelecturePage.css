@@ -1,0 +1,322 @@
+.relecture-page {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.picker-mode {
+  max-width: 600px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h2 {
+  margin: 0 0 4px;
+  color: #2c3e50;
+  font-size: 1.75rem;
+}
+
+.page-header p {
+  margin: 0;
+  color: #8a9aa9;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #eef1f5;
+}
+
+.card h3 {
+  margin: 0 0 16px;
+  color: #3a4a5a;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.etudiants-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.etudiant-card {
+  padding: 16px 20px;
+  border: 2px solid #e1e7ee;
+  border-radius: 10px;
+  background: #fafbfc;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  font-weight: 500;
+  color: #3a4a5a;
+}
+
+.etudiant-card:hover {
+  border-color: #3b82f6;
+  background: #f0f5ff;
+}
+
+.etudiant-card.selected {
+  border-color: #3b82f6;
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.etudiant-nom {
+  font-size: 1rem;
+}
+
+/* Exercice preview */
+.exercice-preview {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.exercice-link {
+  margin-bottom: 8px;
+}
+
+.exercice-link a {
+  color: #3b82f6;
+  word-break: break-all;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.exercice-link a:hover {
+  text-decoration: underline;
+}
+
+.exercice-meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #8a9aa9;
+}
+
+/* Formulaire relecture */
+.relecture-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #3a4a5a;
+  font-size: 0.9rem;
+}
+
+.required {
+  color: #dc2626;
+}
+
+.note-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.input-note {
+  width: 100px !important;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding: 12px 16px;
+}
+
+.note-suffix {
+  color: #8a9aa9;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.textarea {
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.hint {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: #8a9aa9;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #eef1f5;
+}
+
+.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+/* Rules reminder */
+.rules-reminder {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f0f5fa;
+  border-radius: 8px;
+  border: 1px solid #dbeafe;
+}
+
+.rules-reminder h4 {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: #1e3a5f;
+}
+
+.rules-reminder ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.85rem;
+  color: #3a4a5a;
+  line-height: 1.8;
+}
+
+.rules-reminder li {
+  margin-bottom: 4px;
+}
+
+/* Relectures list */
+.relectures-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.relecture-item {
+  border: 1px solid #eef1f5;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.relecture-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s;
+}
+
+.relecture-link:hover {
+  background: #f8fafc;
+}
+
+.relecture-exercice {
+  font-weight: 500;
+  color: #3a4a5a;
+}
+
+.relecture-date {
+  font-size: 0.8rem;
+  color: #8a9aa9;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px;
+  color: #3a4a5a;
+}
+
+.empty-state p {
+  margin: 0 0 24px;
+  color: #8a9aa9;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  gap: 8px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.btn-secondary {
+  background: #f0f3f7;
+  color: #3a4a5a;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e1e7ee;
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 16px;
+  }
+  .note-input-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .input-note {
+    width: 100% !important;
+  }
+  .etudiants-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+  .form-actions .btn {
+    width: 100%;
+  }
+}

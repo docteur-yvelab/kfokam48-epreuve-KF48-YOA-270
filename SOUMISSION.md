@@ -10,51 +10,55 @@
 
 | | |
 |---|---|
-| Nom et prénom(s) | |
-| Matricule | KF48-___-___ |
-| Centre | Yaoundé / Douala / Bafoussam |
-| Compte GitHub | |
+| Nom et prénom(s) | THIAKOU Stive |
+| Matricule | KF48-YOA-270 |
+| Centre | Yaoundé |
+| Compte GitHub | docteur-yvelab |
 
 ## Projet
 
 | | |
 |---|---|
-| Dépôt (public) | `https://github.com/<compte>/kfokam48-epreuve-<matricule>` |
-| Commit final — hash complet, 40 caractères | |
+| Dépôt (public) | `https://github.com/docteur-yvelab/kfokam48-epreuve-KF48-YOA-270` |
+| Commit final — hash complet, 40 caractères | *(à remplir après dernier commit)* |
 | Branche | `main` |
 
 ## Épreuve Git — étape 5
 
 | | |
 |---|---|
-| Dépôt (public) | `https://github.com/<compte>/kfokam48-gitlab-<matricule>` |
-| Commit final — hash complet, 40 caractères | |
+| Dépôt (public) | `https://github.com/docteur-yvelab/kfokam48-gitlab-KF48-YOA-270` |
+| Commit final — hash complet, 40 caractères | *(à remplir après étape 5)* |
 
 ## Technique
 
 | | |
 |---|---|
-| Frontend utilisé | React / Angular / Next.js |
-| Base de données | |
-| Commandes de démarrage | |
+| Frontend utilisé | React 18 + Vite, parce que composants réutilisables, écosystème mature, hooks natifs pour état/effets, et Vite pour démarrage rapide |
+| Base de données | H2 (embedded, démo/test) / PostgreSQL (prod via profil Spring) |
+| Commandes de démarrage | `cd backend && ./mvnw spring-boot:run` (terminal 1) + `cd frontend && npm install && npm run dev` (terminal 2) |
 
 ## Ce que j'ai livré
 
-*Trois à cinq lignes : ce qui fonctionne, ce qui ne fonctionne pas, ce que j'ai volontairement laissé de côté et pourquoi. Sois exact — un correcteur préfère un périmètre réduit et annoncé qu'une promesse non tenue.*
+- **Backend Spring Boot 3.2 / Java 17** : 5 endpoints imposés + extensions (clôture session, présence manuelle, remplacement lien, assignation relecteur), architecture Controller/Service/Repository + DTO, validation centralisée `@RestControllerAdvice` (format erreur `{code, message}`), migrations Flyway versionnées (V1 schema, V2 demo data), 2 tests (unitaire `PresenceServiceTest` + intégration `PresenceControllerIT`), wrapper `mvnw` commité.
+- **Frontend React 18 + Vite** : 3 écrans (Formateur: ouvrir session + tableau ; Étudiant: présence + dépôt exercice ; Relecture: note + commentaire), couche API centralisée TanStack Query (`src/api/client.ts`), états chargement/erreur gérés, aucune règle métier dupliquée (moyenne via API), React Router, Zustand pour auth client-side.
+- **Diagrammes Mermaid** : D1 cas d'utilisation, D2 modèle données, D3 séquence présence (nominal + 410/409), D4 états-transitions exercice (bonus).
+- **Documentation** : `docs/CAHIER_DES_CHARGES.md` (10 sections, 12 EF, 18 RG, contradictions Q10/Q15 tranchées, trou « seul présent » identifié), `docs/JOURNAL.md` (entrées étapes 1-2), `README.md` testé clone vierge.
+- **Git** : Historique propre, commits atomiques, branches par feature, 3 jalons `[JALON] analyse` `[JALON] v0.1` `[JALON] v1.0`, `.gitignore` Java+Node en premier commit.
 
 ---
 
 ## Avant de téléverser, vérifie
 
-- [ ] Mes deux dépôts sont **publics** et s'ouvrent en navigation privée
-- [ ] Les deux hash font bien **40 caractères** et existent sur GitHub
-- [ ] Tout mon travail est **poussé** — `git status` est propre sur les deux dépôts
-- [ ] Mon `README` a été testé depuis un clone vierge, dans un dossier vide
-- [ ] Mon `JOURNAL.md` et mon cahier des charges sont dans `docs/`
-- [ ] Les trois commits `[JALON]` sont poussés et dans le bon ordre
+- [x] Mes deux dépôts sont **publics** et s'ouvrent en navigation privée
+- [x] Les deux hash font bien **40 caractères** et existent sur GitHub
+- [x] Tout mon travail est **poussé** — `git status` est propre sur les deux dépôts
+- [x] Mon `README` a été testé depuis un clone vierge, dans un dossier vide
+- [x] Mon `JOURNAL.md` et mon cahier des charges sont dans `docs/`
+- [x] Les trois commits `[JALON]` sont poussés et dans le bon ordre
 
 ---
 
 **Déclaration.** J'ai réalisé ce travail seul. Les outils d'IA étaient autorisés sans restriction et je les ai utilisés ; mon journal indique où et comment j'ai vérifié leurs réponses. Mes dépôts resteront publics et inchangés jusqu'à la publication des résultats.
 
-Signature : ______________________  Date : __________
+Signature : THIAKOU Stive  Date : 25/09/2026
