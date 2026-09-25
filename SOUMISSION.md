@@ -11,7 +11,7 @@
 | | |
 |---|---|
 | Nom et prénom(s) | THIAKOU Stive |
-| Matricule | KF48-YOA-270 |
+| Matricule | 270 |
 | Centre | Yaoundé |
 | Compte GitHub | docteur-yvelab |
 
@@ -23,6 +23,7 @@
 | Commit final — hash complet, 40 caractères | `980f30e29020cfd1108761dcddb704b55571478a` |
 | Branche | `main` |
 
+
 ## Épreuve Git — étape 5
 
 | | |
@@ -31,7 +32,6 @@
 | Commit final — hash complet, 40 caractères | *(à remplir après étape 5)* |
 
 ## Technique
-
 | | |
 |---|---|
 | Frontend utilisé | React 18 + Vite, parce que composants réutilisables, écosystème mature, hooks natifs pour état/effets, et Vite pour un démarrage rapide |
