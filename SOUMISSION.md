@@ -20,7 +20,7 @@
 | | |
 |---|---|
 | Dépôt (public) | `https://github.com/docteur-yvelab/kfokam48-epreuve-KF48-YOA-270` |
-| Commit final — hash complet, 40 caractères | `980f30e29020cfd1108761dcddb704b55571478a` |
+| Commit final — hash complet, 40 caractères | `28d0f4352dc1306e4a360851f240ac9ef8eb84b9` |
 | Branche | `main` |
 
 
